@@ -27,15 +27,36 @@ app.get('/api/audio', async (req, res) => {
         const filename = `audio_${Date.now()}.mp3`;
         const outputPath = path.join(__dirname, 'tmp', filename);
 
+        // Cleanup any existing file first
+        if (fs.existsSync(outputPath)) {
+            fs.unlinkSync(outputPath);
+        }
+
         // Download audio with improved error handling
         await new Promise((resolve, reject) => {
+            let stderr = '';
             const child = exec(
-                `yt-dlp -x --audio-format mp3 -o "${outputPath}.%(ext)s" "${url}"`, 
+                `yt-dlp -x --audio-format mp3 --no-mtime -o "${outputPath}" "${url}"`, 
                 {
                     timeout: 120000,
                     shell: '/bin/bash'
                 }
             );
+
+            // Collect error output
+            child.stderr.on('data', (data) => {
+                stderr += data.toString();
+            });
+
+            // Handle process cleanup
+            child.on('error', reject);
+            child.on('close', (code) => {
+                if (code !== 0) {
+                    reject(new Error(`yt-dlp error (code ${code}): ${stderr || 'Unknown error'}`));
+                } else {
+                    resolve();
+                }
+            });
 
             // Handle process cleanup
             child.on('error', reject);
@@ -43,7 +64,10 @@ app.get('/api/audio', async (req, res) => {
                 if (code !== 0) {
                     reject(new Error(`yt-dlp exited with code ${code}`));
                 } else {
-                    resolve();
+                    // Verify file exists before resolving
+                    fs.access(outputPath, fs.constants.F_OK, (err) => {
+                        err ? reject(err) : resolve();
+                    });
                 }
             });
 
@@ -56,11 +80,22 @@ app.get('/api/audio', async (req, res) => {
             });
         });
 
-        // Stream file and delete after sending
-        res.sendFile(outputPath, () => {
+        // Add small delay after download completes
+        await new Promise(resolve => setTimeout(resolve, 500));
+
+        // Stream file using proper read stream
+        const readStream = fs.createReadStream(outputPath);
+        readStream.pipe(res);
+        
+        readStream.on('close', () => {
             fs.unlink(outputPath, (err) => {
                 if (err) console.error('Error deleting file:', err);
             });
+        });
+
+        readStream.on('error', (error) => {
+            console.error('Stream error:', error);
+            res.status(500).end();
         });
 
     } catch (error) {
