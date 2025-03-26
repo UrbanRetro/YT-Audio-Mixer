@@ -5,7 +5,8 @@ const audioContext = new (window.AudioContext || window.webkitAudioContext)();
 function createDeck(deckId) {
     const player = document.getElementById(`player${deckId}`);
     const status = document.getElementById(`status${deckId}`);
-    const progress = document.getElementById(`progress${deckId}`);
+    // Replace progress with seek control
+    const seek = document.getElementById(`seek${deckId}`);
     const progressContainer = document.getElementById(`progressContainer${deckId}`);
     const currentTime = document.getElementById(`currentTime${deckId}`);
     const duration = document.getElementById(`duration${deckId}`);
@@ -43,14 +44,24 @@ function createDeck(deckId) {
     });
 
     player.addEventListener('timeupdate', () => {
+        // Update seek value instead of progress bar width
         const progressPercent = (player.currentTime / player.duration) * 100;
-        progress.style.width = `${progressPercent}%`;
+        seek.value = progressPercent;
         currentTime.textContent = formatTime(player.currentTime);
     });
 
+    // Dans la fonction createDeck, modifier l'événement loadedmetadata
     player.addEventListener('loadedmetadata', () => {
         progressContainer.classList.remove('hidden');
         duration.textContent = formatTime(player.duration);
+    });
+    
+    // Modifier les gestionnaires de seek en bas du fichier
+    // In createDeck function, after getting the seek element
+    seek.addEventListener('input', (e) => {
+        const seekPercent = e.target.value;
+        const seekTime = (seekPercent / 100) * player.duration;
+        player.currentTime = seekTime;
     });
 
     // In createDeck function, add these variables
