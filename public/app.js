@@ -66,9 +66,10 @@ function createDeck(deckId) {
 
     // In createDeck function, add these variables
     const playBtn = document.getElementById(`playPause${deckId}`);
+    playBtn.disabled = true; // Désactivé par défaut
     let isPlaying = false;
 
-    // Add play/pause handler
+    // Add play/pause handler (MOVED OUTSIDE OF canplaythrough EVENT)
     playBtn.addEventListener('click', () => {
         if (audioContext.state === 'suspended') {
             audioContext.resume();
@@ -83,11 +84,31 @@ function createDeck(deckId) {
         }
         isPlaying = !isPlaying;
     });
+
+    // Mute button handling (MOVED OUTSIDE OF canplaythrough EVENT)
+    const muteBtn = document.getElementById(`mute${deckId}`);
+    let isMuted = false;
+    let lastVolume = 1.0;
     
-    // Update the canplaythrough handler
+    muteBtn.addEventListener('click', () => {
+        isMuted = !isMuted;
+        if (isMuted) {
+            lastVolume = gainNode.gain.value;
+            gainNode.gain.value = 0;
+            muteBtn.textContent = '🔊 Unmute';
+        } else {
+            gainNode.gain.value = lastVolume;
+            muteBtn.textContent = '🔇 Mute';
+        }
+    });
+    muteBtn.disabled = true;
+
+    // Update the canplaythrough handler (SIMPLIFIED)
     player.addEventListener('canplaythrough', () => {
         status.classList.add('hidden');
         playBtn.disabled = false;
+        muteBtn.disabled = false;
+        volumeControl.disabled = false;
     });
     
     // Add error handling
@@ -137,4 +158,19 @@ document.getElementById('crossfader').addEventListener('input', (e) => {
     const value = parseFloat(e.target.value);
     deckA.gain.value = 1 - value;
     deckB.gain.value = value;
+});
+
+// Dans la fonction startPlayback
+function startPlayback(offset = 0) {
+    // ... code existant ...
+    
+    activeSource.onended = () => {
+        // ... code existant ...
+        playBtn.disabled = false; // Restaurer l'état actif
+    };
+}
+
+// Ajouter la désactivation initiale des EQ
+['bass', 'mid', 'treble'].forEach(type => {
+    document.getElementById(`${type}${deckId}`).disabled = true;
 });
