@@ -1,0 +1,156 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+    <meta charset="UTF-8">
+    <title>YT Audio Mixer</title>
+    <script src="https://cdn.tailwindcss.com?plugins=forms"></script>
+    <style>
+        .slider-dj::-webkit-slider-thumb {
+            background-color: white;
+            border: 2px solid #38bdf8;
+            height: 20px;
+            width: 20px;
+            border-radius: 50%;
+        }
+        .slider-dj::-moz-range-thumb {
+            background-color: white;
+            border: 2px solid #38bdf8;
+            height: 20px;
+            width: 20px;
+            border-radius: 50%;
+        }
+    </style>
+</head>
+<!-- Main body container -->
+<body class="flex h-screen items-center bg-black text-white font-mono">
+    <!-- Deck A - Reduced height -->
+    <!-- Supprimer le gradient des decks -->
+    <div class="w-[30%] h-[50vh] flex flex-col items-center justify-center p-6 bg-zinc-900 border-r border-gray-700">
+        <!-- Keep existing deck content -->
+        <h2 class="text-2xl font-extrabold mb-4">Deck A</h2>
+        <div class="w-full mb-4">
+            <div class="flex gap-0">
+                <input id="urlA" class="flex-grow rounded-l px-3 py-2 bg-zinc-800 border border-gray-600" placeholder="YouTube URL">
+                <button id="loadA" class="rounded-r px-4 py-2 bg-gray-700 border border-gray-600">Load</button>
+            </div>
+        </div>
+        <div id="progressContainerA" class="w-full hidden">
+            <div class="h-1 bg-gray-700 rounded-full">
+                <div id="progressA" class="h-full bg-blue-500 rounded-full transition-all duration-100" style="width: 0%"></div>
+            </div>
+            <div class="flex justify-between text-xs mt-1">
+                <span id="currentTimeA">0:00</span>
+                <span id="durationA">0:00</span>
+            </div>
+        </div>
+        <div class="flex gap-2 mt-4">
+            <button id="playPauseA" class="bg-green-600 px-4 py-2 rounded">▶ Play</button>
+            <button id="muteA" class="bg-red-600 px-4 py-2 rounded">🔇 Mute</button>
+        </div>
+        <audio id="playerA" class="hidden"></audio>
+        <p id="statusA" class="text-xs mt-2 hidden">Status: Ready</p>
+    </div>
+
+    <!-- Central Mixer -->
+<div class="w-[40%] h-screen flex flex-col bg-gradient-to-b from-zinc-800 to-zinc-900">
+
+  <!-- Titre en haut (optionnel : p-6 pour aérer) -->
+  <div class="p-6">
+      <h2 class="text-3xl font-black text-center mb-8 animate-pulse">YT Audio Mixer</h2>
+  </div>
+
+  <!-- Container principal au milieu (flex-1) -->
+  <div class="flex-1 flex items-center justify-center px-6">
+      <!-- Deck Controls Container (Deck A & Deck B) -->
+      <div class="flex justify-between w-full gap-4">
+          
+          <!-- Deck A Controls -->
+          <div class="w-1/2 p-4 border border-gray-600 rounded-lg space-y-4">
+              <h3 class="text-xl font-semibold text-center mb-2">DECK A</h3>
+              <div class="space-y-2">
+                  <label class="text-xs uppercase">High</label>
+                  <input type="range" id="trebleA" class="slider-dj w-full" min="-40" max="40">
+              </div>
+              <div class="space-y-2">
+                  <label class="text-xs uppercase">Mid</label>
+                  <input type="range" id="midA" class="slider-dj w-full" min="-40" max="40">
+              </div>
+              <div class="space-y-2">
+                  <label class="text-xs uppercase">Low</label>
+                  <input type="range" id="bassA" class="slider-dj w-full" min="-40" max="40">
+              </div>
+              <div class="space-y-2">
+                  <label class="text-xs uppercase">Volume</label>
+                  <input type="range" id="volumeA" class="slider-dj w-full" min="0" max="1" step="0.01" value="1">
+              </div>
+          </div>
+          
+          <!-- Deck B Controls -->
+          <div class="w-1/2 p-4 border border-gray-600 rounded-lg space-y-4">
+              <h3 class="text-xl font-semibold text-center mb-2">DECK B</h3>
+              <div class="space-y-2">
+                  <label class="text-xs uppercase">High</label>
+                  <input type="range" id="trebleB" class="slider-dj w-full" min="-40" max="40">
+              </div>
+              <div class="space-y-2">
+                  <label class="text-xs uppercase">Mid</label>
+                  <input type="range" id="midB" class="slider-dj w-full" min="-40" max="40">
+              </div>
+              <div class="space-y-2">
+                  <label class="text-xs uppercase">Low</label>
+                  <input type="range" id="bassB" class="slider-dj w-full" min="-40" max="40">
+              </div>
+              <div class="space-y-2">
+                  <label class="text-xs uppercase">Volume</label>
+                  <input type="range" id="volumeB" class="slider-dj w-full" min="0" max="1" step="0.01" value="1">
+              </div>
+          </div>
+      </div>
+  </div>
+
+  <!-- Crossfader en bas -->
+  <div class="w-full px-8 pb-6">
+      <label class="text-sm uppercase mb-2 block text-center">Crossfader</label>
+      <input
+          type="range"
+          id="crossfader"
+          class="w-full accent-purple-500"
+          min="0"
+          max="1"
+          step="0.01"
+          value="0.5"
+      >
+  </div>
+</div>
+
+
+    <!-- Deck B - Reduced height -->
+    <div class="w-[30%] h-[50vh] flex flex-col items-center justify-center p-6 bg-zinc-900 border-l border-gray-700">
+        <!-- Keep existing deck content -->
+        <h2 class="text-2xl font-extrabold mb-4">Deck B</h2>
+        <div class="w-full mb-4">
+            <div class="flex gap-0">
+                <input id="urlB" class="flex-grow rounded-l px-3 py-2 bg-zinc-800 border border-gray-600" placeholder="YouTube URL">
+                <button id="loadB" class="rounded-r px-4 py-2 bg-gray-700 border border-gray-600">Load</button>
+            </div>
+        </div>
+        <div id="progressContainerB" class="w-full hidden">
+            <div class="h-1 bg-gray-700 rounded-full">
+                <div id="progressB" class="h-full bg-blue-500 rounded-full transition-all duration-100" style="width: 0%"></div>
+            </div>
+            <div class="flex justify-between text-xs mt-1">
+                <span id="currentTimeB">0:00</span>
+                <span id="durationB">0:00</span>
+            </div>
+        </div>
+        <div class="flex gap-2 mt-4">
+            <button id="playPauseB" class="bg-green-600 px-4 py-2 rounded">▶ Play</button>
+            <button id="muteB" class="bg-red-600 px-4 py-2 rounded">🔇 Mute</button>
+        </div>
+        <audio id="playerB" class="hidden"></audio>
+        <p id="statusB" class="text-xs mt-2 hidden">Status: Ready</p>
+    </div>
+</body>
+<script src="app.js"></script>
+</body>
+</html>
